@@ -1,0 +1,22 @@
+{
+  "java": {
+    "data_dir": "/Users/zhangzhenhua/Code/python/CodeT5P/data/java",
+    "columns": {
+      "prompt": "nl",
+      "query": "",
+      "response": "code",
+      "history": ""
+    }
+  },
+  "text2code": {
+    "hf_hub_url": "code_x_glue_tc_text_to_code",
+    "columns": {
+      "prompt": "nl",
+      "query": "",
+      "response": "code",
+      "history": ""
+    }
+  }
+
+
+}
