@@ -35,7 +35,7 @@ def get_args():
     parser.add_argument('--early_stop', default=5, type=int)
 
     # Logging and stuff
-    parser.add_argument('--data_name', default="java", type=str, help='data.json dataset')
+    parser.add_argument('--data_name', default="text2code", type=str, help='data.json dataset')
     parser.add_argument('--checkpoint_dir', default=None, type=str, help="path/to/lora_dir")
     parser.add_argument('--save-dir', default="temp", type=str)
     parser.add_argument('--type', default="lora", type=str, help="lora or full")

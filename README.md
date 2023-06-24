@@ -1,6 +1,6 @@
 ### CodeT5P tuning
 ```shell
-python codet5p.py
+python codet5p.py --fp16
 ```
 
 ### todo list
