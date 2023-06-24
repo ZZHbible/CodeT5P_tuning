@@ -1,6 +1,6 @@
 {
   "java": {
-    "data_dir": "/Users/zhangzhenhua/Code/python/CodeT5P/data/java",
+    "data_dir": "data/java",
     "columns": {
       "prompt": "nl",
       "query": "",
@@ -17,6 +17,4 @@
       "history": ""
     }
   }
-
-
 }

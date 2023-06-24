@@ -31,9 +31,11 @@ def load_tokenize_data(args):
             "test": test_file
         }
         dataset = load_dataset(data_info[args.data_name]['data_dir'], data_files=data_files)
-    train_dataset = CodeT5PDataset(dataset['train'], is_train=True)
-    eval_dataset = CodeT5PDataset(dataset['validation'], is_train=True)
-    return train_dataset, eval_dataset
+    args.eval_data = dataset['validation']['code']
+    train_dataset = CodeT5PDataset(dataset['train'], args.tokenizer, is_train=True)
+    eval_dataset = CodeT5PDataset(dataset['validation'], args.tokenizer, is_train=True)
+    test_dataset = CodeT5PDataset(dataset['test'], args.tokenizer, is_train=False)
+    return train_dataset, eval_dataset, test_dataset
 
 
 def load_model(args):
@@ -42,30 +44,34 @@ def load_model(args):
     config = AutoConfig.from_pretrained(args.model_path, trust_remote_code=True)
     if args.codet5_b_flag:
         config.pad_token_id = tokenizer.pad_token_id
-        config.decoder_start_token_id = tokenizer.pad_token_id
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path, config=config, trust_remote_code=True,torch_dtype=torch.float16)
-
-    print(f"  ==> Loaded model from {args.model_path}, model size {model.num_parameters()}")
-    if not args.checkpoint_dir:
-        config = LoraConfig(
-            r=args.lora_r,
-            lora_alpha=args.lora_alpha,
-            target_modules=args.target_modules,
-            lora_dropout=args.lora_dropout,
-            task_type="SEQ_2_SEQ_LM",
-        )
-        model = get_peft_model(model, config)
-    else:
-        model = PeftModel.from_pretrained(
-            model,
-            args.checkpoint_dir
-        )
+        # config.decoder_start_token_id = tokenizer.pad_token_id
+        config.decoder_start_token_id = tokenizer.bos_token_id
+    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path, config=config, trust_remote_code=True,
+                                                  torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
+        args.model_path, config=config, trust_remote_code=True)
     model.to(args.device)
+    print(f"  ==> Loaded model from {args.model_path}, model size {model.num_parameters()}")
+    if args.type == "lora":
+        if not args.checkpoint_dir:
+            config = LoraConfig(
+                r=args.lora_r,
+                lora_alpha=args.lora_alpha,
+                target_modules=args.target_modules,
+                lora_dropout=args.lora_dropout,
+                task_type="SEQ_2_SEQ_LM",
+            )
+            model = get_peft_model(model, config)
+        else:
+            model = PeftModel.from_pretrained(
+                model,
+                args.checkpoint_dir,
+                is_trainable=True
+            )
+        model.print_trainable_parameters()
+
     # don't support yet
     # if torch.__version__ >= "2" and sys.platform != "win32":
     #     model = torch.compile(model)
-
-    model.print_trainable_parameters()
     return model
 
 

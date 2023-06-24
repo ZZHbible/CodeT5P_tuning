@@ -114,29 +114,17 @@ def run_training(args, model, train_data, eval_data=None):
             torch.cuda.empty_cache()
 
             model.eval()
-            df = pd.read_csv(os.path.join("/data/user223/yg/CodeT5P/data/java", "valid.csv"))
-            to_predict = df["nl"].tolist()
-            ref_list = df["code"].tolist()
             all_outputs = []
             # Batching
-            for batch in tqdm(
-                    [to_predict[i: i + args.eval_batch_size] for i in range(0, len(to_predict), args.eval_batch_size)],
-                    desc="Generating outputs", ):
-                input = args.tokenizer.batch_encode_plus(
-                    batch,
-                    max_length=args.max_source_len,
-                    padding="max_length",
-                    return_tensors="pt",
-                    truncation=True,
-                )
-                input_ids = input["input_ids"].to(args.device)
-                source_mask = input["attention_mask"].to(args.device)
+            for batch in tqdm(eval_dataloader, total=len(eval_dataloader), desc="Generating outputs", ):
+                batch = tuple(t.to(args.device) for t in batch)
+                source_ids, source_mask, target_ids, target_mask = batch
                 generate_kwargs = {
-                    "input_ids": input_ids,
+                    "input_ids": source_ids,
                     "attention_mask": source_mask,
                     "num_beams": args.beam_size,
                     "max_new_tokens": args.max_target_len,
-                    "eos_token_id": args.tokenizer.eos_token_id,
+                    # "eos_token_id" :args.tokenizer.eos_token_id,
                 }
                 outputs = model.generate(**generate_kwargs)
                 all_outputs.extend(outputs.cpu().numpy())
@@ -147,10 +135,10 @@ def run_training(args, model, train_data, eval_data=None):
                 for output_id in all_outputs
             ]
 
-            assert len(ref_list) == len(hyp_list)
+            assert len(args.eval_data) == len(hyp_list)
             df = pd.DataFrame(hyp_list)
             df.to_csv("hyp_temp.csv", index=False, header=None)
-            df = pd.DataFrame(ref_list)
+            df = pd.DataFrame(args.eval_data)
             df.to_csv("ref_temp.csv", index=False, header=None)
 
             bleu4, acc = get_bleu_socre("ref_temp.csv", "hyp_temp.csv")
@@ -158,7 +146,7 @@ def run_training(args, model, train_data, eval_data=None):
             if bleu4 >= best_bleu:
                 df = pd.DataFrame(hyp_list)
                 df.to_csv(os.path.join(args.save_dir, "preds.csv"), index=False, header=None)
-                df = pd.DataFrame(ref_list)
+                df = pd.DataFrame(args.eval_data)
                 df.to_csv(os.path.join(args.save_dir, "golds.csv"), index=False, header=None)
                 count = 0
                 logger.info("  Best bleu:%s", bleu4)
@@ -178,6 +166,40 @@ def run_training(args, model, train_data, eval_data=None):
         torch.cuda.empty_cache()
 
 
+def test(args, model, test_data):
+    model.eval()
+    test_sampler = SequentialSampler(test_data)
+    test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=8)
+
+    logger.info("***** Running evaluation  *****")
+    logger.info("  Num examples = %d", len(test_data))
+    logger.info("  Batch size = %d", 8)
+    model.eval()
+    all_outputs = []
+    for batch in tqdm(test_dataloader, total=len(test_dataloader)):
+        batch = tuple(t.to(args.device) for t in batch)
+        source_ids, source_mask, target_ids, target_mask = batch
+        generate_kwargs = {
+            "input_ids": source_ids,
+            "attention_mask": source_mask,
+            "num_beams": args.beam_size,
+            "max_new_tokens": args.max_target_len,
+            # "eos_token_id" :args.tokenizer.eos_token_id,
+        }
+        with torch.no_grad():
+            outputs = model.generate(**generate_kwargs)
+            all_outputs.extend(outputs.cpu().numpy())
+    hyp_list = [
+        args.tokenizer.decode(
+            output_id, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        )
+        for output_id in all_outputs
+    ]
+    with open('output.txt', 'w') as f:
+        for hyp in hyp_list:
+            f.write(hyp + '\n')
+
+
 def main(args):
     argsdict = vars(args)
     print(pprint.pformat(argsdict))
@@ -187,9 +209,10 @@ def main(args):
         f.write(pprint.pformat(argsdict))
 
     # You can customize this function to load your own data for any Seq2Seq LM tasks.
-    train_data, eval_data = load_tokenize_data(args)
     model = load_model(args)
+    train_data, eval_data, test_data = load_tokenize_data(args)
     run_training(args, model, train_data, eval_data)
+    test(args, model, test_data)
 
 
 if __name__ == "__main__":

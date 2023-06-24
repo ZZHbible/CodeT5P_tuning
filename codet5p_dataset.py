@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import Dataset
-from transformers import AutoTokenizer
 
 
 class CodeT5PDataset(Dataset):
-    def __init__(self, dataset, is_train=True):
+    def __init__(self, dataset, tokenizer, is_train=True):
         super(CodeT5PDataset, self).__init__()
+        self.tokenizer = tokenizer
         self.is_train = is_train
         self.data = dataset.map(
             self.preprocess_function,
@@ -21,15 +21,13 @@ class CodeT5PDataset(Dataset):
             target = [' '.join(ex.split()) for ex in dataset["code"]]
         else:
             target = ["" for _ in range(len(dataset['nl']))]
-        tokenizer = AutoTokenizer.from_pretrained('Salesforce/codet5p-220m')
-
-        model_inputs = tokenizer(
+        model_inputs = self.tokenizer(
             source,
             max_length=150,
             padding="max_length",
             truncation=True
         )
-        labels = tokenizer(
+        labels = self.tokenizer(
             target,
             max_length=150,
             padding="max_length",
