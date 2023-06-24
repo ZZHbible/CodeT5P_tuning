@@ -20,7 +20,7 @@ import numpy
 import pandas as pd
 import torch
 from datasets import load_dataset, load_from_disk
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, PeftModel
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup, AutoConfig
 from torch.utils.data import RandomSampler, DataLoader, SequentialSampler
 import logging
@@ -166,7 +166,27 @@ def run_training(args, model, train_data, eval_data=None):
         torch.cuda.empty_cache()
 
 
-def test(args, model, test_data):
+def test(args, test_data):
+    config = AutoConfig.from_pretrained(args.model_path, trust_remote_code=True)
+    if args.codet5_b_flag:
+        config.pad_token_id = args.tokenizer.pad_token_id
+        # config.decoder_start_token_id = tokenizer.pad_token_id
+        config.decoder_start_token_id = args.tokenizer.bos_token_id
+    if args.type == 'lora':
+        model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path, config=config, trust_remote_code=True,
+                                                      torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
+            args.model_path, config=config, trust_remote_code=True)
+        model = PeftModel.from_pretrained(
+            model,
+            os.path.join(args.save_dir, 'checkpoint-best-bleu'),
+            is_trainable=True
+        )
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(os.path.join(args.save_dir, 'checkpoint-best-bleu'),
+                                                      config=config, trust_remote_code=True,
+                                                      torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
+            args.model_path, config=config, trust_remote_code=True)
+    model.to(args.device)
     model.eval()
     test_sampler = SequentialSampler(test_data)
     test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=8)
@@ -212,7 +232,9 @@ def main(args):
     model = load_model(args)
     train_data, eval_data, test_data = load_tokenize_data(args)
     run_training(args, model, train_data, eval_data)
-    test(args, model, test_data)
+    del model
+    # test
+    test(args, test_data)
 
 
 if __name__ == "__main__":
