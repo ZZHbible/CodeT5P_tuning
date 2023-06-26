@@ -26,7 +26,7 @@ def get_args():
     parser.add_argument('--epochs', default=30, type=int)
     parser.add_argument('--lr', default=5e-5, type=float)
     parser.add_argument('--lr-warmup-steps', default=200, type=int)
-    parser.add_argument('--train_batch_size', default=8, type=int)
+    parser.add_argument('--train_batch_size', default=16, type=int)
     parser.add_argument('--eval_batch_size', default=8, type=int)
     parser.add_argument('--grad-acc-steps', default=1, type=int)
     parser.add_argument('--local_rank', default=-1, type=int)
@@ -38,10 +38,10 @@ def get_args():
     parser.add_argument('--data_name', default="text2code", type=str, help='data.json dataset')
     parser.add_argument('--checkpoint_dir', default=None, type=str, help="path/to/lora_dir")
     parser.add_argument('--save-dir', default="temp", type=str)
-    parser.add_argument('--type', default="lora", type=str, help="lora or full")
+    parser.add_argument('--type', default="lora",choices=['lora','full'], type=str, help="lora or full")
     parser.add_argument('--lora_r', default=16, type=int)
     parser.add_argument('--lora_alpha', default=32, type=int)
-    parser.add_argument('--target_modules', default=["q_proj", "k_proj", "v_proj", "o_proj"],
+    parser.add_argument('--target_modules', default=["q", "v", "o"],
                         help=" The amount of parameters is greater than or equal to codet5-2b['q_proj','k_proj' 'v_proj', 'o_proj']")
     parser.add_argument('--lora_dropout', default=0.1, type=float)
 
@@ -49,5 +49,12 @@ def get_args():
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     args.model_path = model_dict[args.load]
     args.codet5_b_flag = True if args.load in ["codet5p-2b", "codet5p-6b", "codet5p-16b"] else False
-
+    if args.type == 'full':
+        del args.target_modules
+        del args.lora_r
+        del args.lora_alpha
+    if args.type=='lora' and args.codet5_b_flag:
+        target_modules = args.target_modules
+        target_modules = [module+'_proj' for module in target_modules]
+        args.target_modules=target_modules
     return args

@@ -46,12 +46,17 @@ def load_model(args):
         config.pad_token_id = tokenizer.pad_token_id
         # config.decoder_start_token_id = tokenizer.pad_token_id
         config.decoder_start_token_id = tokenizer.bos_token_id
-    model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path, config=config, trust_remote_code=True,
-                                                  torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
-        args.model_path, config=config, trust_remote_code=True)
+    if args.type == 'full' and args.checkpint_dir:
+        model = AutoModelForSeq2SeqLM.from_pretrained(args.checkpoint_dir, config=config, trust_remote_code=True,
+                                                      torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
+            args.model_path, config=config, trust_remote_code=True)
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(args.model_path, config=config, trust_remote_code=True,
+                                                      torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
+            args.model_path, config=config, trust_remote_code=True)
     model.to(args.device)
     print(f"  ==> Loaded model from {args.model_path}, model size {model.num_parameters()}")
-    if args.type == "lora":
+    if args.type == 'lora':
         if not args.checkpoint_dir:
             config = LoraConfig(
                 r=args.lora_r,
@@ -67,11 +72,11 @@ def load_model(args):
                 args.checkpoint_dir,
                 is_trainable=True
             )
-        model.print_trainable_parameters()
-
     # don't support yet
     # if torch.__version__ >= "2" and sys.platform != "win32":
     #     model = torch.compile(model)
+
+        model.print_trainable_parameters()
     return model
 
 
