@@ -26,7 +26,7 @@ def get_args():
     parser.add_argument('--epochs', default=30, type=int)
     parser.add_argument('--lr', default=5e-5, type=float)
     parser.add_argument('--warmup_steps', default=100, type=int)
-    parser.add_argument("--adam_epsilon", default=1e-8, type=float,help="Epsilon for Adam optimizer.")
+    parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument('--train_batch_size', default=16, type=int)
     parser.add_argument('--eval_batch_size', default=8, type=int)
     parser.add_argument('--grad-acc-steps', default=1, type=int)
@@ -39,7 +39,7 @@ def get_args():
     parser.add_argument('--data_name', default="text2code", type=str, help='data.json dataset')
     parser.add_argument('--checkpoint_dir', default=None, type=str, help="path/to/lora_dir")
     parser.add_argument('--save_dir', default="temp", type=str)
-    parser.add_argument('--type', default="lora",choices=['lora','full'], type=str, help="lora or full")
+    parser.add_argument('--type', default="lora", choices=['lora', 'full'], type=str, help="lora or full")
     parser.add_argument('--lora_r', default=16, type=int)
     parser.add_argument('--lora_alpha', default=32, type=int)
     parser.add_argument('--target_modules', default=["q", "v", "o"],
@@ -54,8 +54,8 @@ def get_args():
         del args.target_modules
         del args.lora_r
         del args.lora_alpha
-    if args.type=='lora' and args.codet5_b_flag:
+    if args.type == 'lora' and args.codet5_b_flag:
         target_modules = args.target_modules
-        target_modules = [module+'_proj' for module in target_modules]
-        args.target_modules=target_modules
+        target_modules = [module + '_proj' for module in target_modules]
+        args.target_modules = target_modules
     return args

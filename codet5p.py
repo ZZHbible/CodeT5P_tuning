@@ -27,7 +27,6 @@ import logging
 import math
 from tqdm import tqdm
 from utils import get_bleu_socre, load_model, load_tokenize_data
-from codet5p_dataset import CodeT5PDataset
 from config import get_args
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
