@@ -46,7 +46,7 @@ def load_model(args):
         config.pad_token_id = tokenizer.pad_token_id
         # config.decoder_start_token_id = tokenizer.pad_token_id
         config.decoder_start_token_id = tokenizer.bos_token_id
-    if args.type == 'full' and args.checkpint_dir:
+    if args.type == 'full' and args.checkpoint_dir:
         model = AutoModelForSeq2SeqLM.from_pretrained(args.checkpoint_dir, config=config, trust_remote_code=True,
                                                       torch_dtype=torch.float16) if args.fp16 else AutoModelForSeq2SeqLM.from_pretrained(
             args.model_path, config=config, trust_remote_code=True)

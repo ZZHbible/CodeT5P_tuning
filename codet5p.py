@@ -78,7 +78,7 @@ def run_training(args, model, train_data, eval_data=None):
             scheduler.step()
             global_step += 1
             train_loss = round(tr_loss * 1 / (nb_tr_steps + 1), 4)
-            wandb.log({'train_loss': train_loss.item()})
+            wandb.log({'train_loss': round(train_loss, 3)})
             bar.set_description("[{}] Train loss {}".format(cur_epoch, round(train_loss, 3)))
 
         if eval_data:
