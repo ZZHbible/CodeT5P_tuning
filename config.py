@@ -25,7 +25,8 @@ def get_args():
     # Training
     parser.add_argument('--epochs', default=30, type=int)
     parser.add_argument('--lr', default=5e-5, type=float)
-    parser.add_argument('--lr-warmup-steps', default=200, type=int)
+    parser.add_argument('--warmup_steps', default=100, type=int)
+    parser.add_argument("--adam_epsilon", default=1e-8, type=float,help="Epsilon for Adam optimizer.")
     parser.add_argument('--train_batch_size', default=16, type=int)
     parser.add_argument('--eval_batch_size', default=8, type=int)
     parser.add_argument('--grad-acc-steps', default=1, type=int)
@@ -37,7 +38,7 @@ def get_args():
     # Logging and stuff
     parser.add_argument('--data_name', default="text2code", type=str, help='data.json dataset')
     parser.add_argument('--checkpoint_dir', default=None, type=str, help="path/to/lora_dir")
-    parser.add_argument('--save-dir', default="temp", type=str)
+    parser.add_argument('--save_dir', default="temp", type=str)
     parser.add_argument('--type', default="lora",choices=['lora','full'], type=str, help="lora or full")
     parser.add_argument('--lora_r', default=16, type=int)
     parser.add_argument('--lora_alpha', default=32, type=int)

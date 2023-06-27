@@ -19,9 +19,9 @@ import pprint
 import numpy
 import pandas as pd
 import torch
-from datasets import load_dataset, load_from_disk
-from peft import LoraConfig, get_peft_model, PeftModel
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, get_linear_schedule_with_warmup, AutoConfig
+import wandb
+from peft import PeftModel
+from transformers import AutoModelForSeq2SeqLM, get_linear_schedule_with_warmup, AutoConfig
 from torch.utils.data import RandomSampler, DataLoader, SequentialSampler
 import logging
 import math
@@ -41,10 +41,10 @@ def run_training(args, model, train_data, eval_data=None):
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler,
                                   batch_size=args.train_batch_size)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, eps=args.adam_epsilon)
     scheduler = get_linear_schedule_with_warmup(
         optimizer=optimizer,
-        num_warmup_steps=0,
+        num_warmup_steps=args.warmup_steps,
         num_training_steps=(len(train_dataloader) * args.epochs),
     )
 
@@ -79,6 +79,7 @@ def run_training(args, model, train_data, eval_data=None):
             scheduler.step()
             global_step += 1
             train_loss = round(tr_loss * 1 / (nb_tr_steps + 1), 4)
+            wandb.log({'train_loss': train_loss.item()})
             bar.set_description("[{}] Train loss {}".format(cur_epoch, round(train_loss, 3)))
 
         if eval_data:
@@ -241,5 +242,5 @@ if __name__ == "__main__":
     args = get_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
-
+    wandb.init("CodeT5P_training", name=args.type + args.load + args.data_name)
     main(args)
