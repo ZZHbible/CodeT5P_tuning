@@ -12,14 +12,15 @@ def get_args():
         "codet5p-770m": "Salesforce/codet5p-770m",
         "codet5p-2b": "Salesforce/codet5p-2b",
         "codet5p-6b": "Salesforce/codet5p-6b",
-        "codet5p-16b": "Salesforce/codet5p-16b"
+        "codet5p-16b": "Salesforce/codet5p-16b",
+        "llama7b":"decapoda-research/llama-7b-hf"
     }
 
     parser = argparse.ArgumentParser(description="CodeT5+ finetuning on Seq2Seq LM task")
-    parser.add_argument('--max-source-len', default=150, type=int)
-    parser.add_argument('--max-target-len', default=150, type=int)
+    parser.add_argument('--max_source_len', default=150, type=int)
+    parser.add_argument('--max_target_len', default=150, type=int)
     # parser.add_argument('--cache-data', default='cache_data/summarize_java', type=str)
-    parser.add_argument('--load', default='codet5p-2b', type=str)
+    parser.add_argument('--load', default='llama7b', type=str)
     parser.add_argument('--beam_size', default=1, type=int)
 
     # Training
@@ -29,7 +30,7 @@ def get_args():
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument('--train_batch_size', default=16, type=int)
     parser.add_argument('--eval_batch_size', default=8, type=int)
-    parser.add_argument('--grad-acc-steps', default=1, type=int)
+    parser.add_argument('--grad_acc_steps', default=1, type=int)
     parser.add_argument('--local_rank', default=-1, type=int)
     parser.add_argument('--deepspeed', default=None, type=str)
     parser.add_argument('--fp16', default=False, action='store_true')
@@ -54,7 +55,7 @@ def get_args():
         del args.target_modules
         del args.lora_r
         del args.lora_alpha
-    if args.type == 'lora' and args.codet5_b_flag:
+    if args.type == 'lora' and (args.codet5_b_flag or "llama" in args.load):
         target_modules = args.target_modules
         target_modules = [module + '_proj' for module in target_modules]
         args.target_modules = target_modules

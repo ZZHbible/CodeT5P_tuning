@@ -32,6 +32,8 @@ def load_tokenize_data(args):
         }
         dataset = load_dataset(data_info[args.data_name]['data_dir'], data_files=data_files)
     args.eval_data = dataset['validation']['code']
+    if "llama" in args.load:
+        return dataset["train"],dataset['validation'],dataset['test']
     train_dataset = CodeT5PDataset(dataset['train'], args.tokenizer, is_train=True)
     eval_dataset = CodeT5PDataset(dataset['validation'], args.tokenizer, is_train=True)
     test_dataset = CodeT5PDataset(dataset['test'], args.tokenizer, is_train=False)
