@@ -1,6 +1,6 @@
 ### CodeT5P tuning
 ```shell
-python codet5p.py --fp16
+python codet5p.py --load codet5p-220m --type lora --target_modules ["q","v","o"] --fp16[Optional]
 ```
 
 ### todo list
