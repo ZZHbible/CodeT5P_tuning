@@ -3,6 +3,8 @@
 python codet5p.py --load codet5p-220m --type lora --target_modules ["q","v","o"] --fp16[Optional]
 ```
 
+Note: codet5p-2b+ still have problem
+
 ### todo list
 
 - [ ] 支持llama
